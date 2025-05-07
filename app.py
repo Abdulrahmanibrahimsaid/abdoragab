@@ -1,57 +1,30 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
-import numpy as np
+import scipy.stats as stats
 
-# 1. تحميل البيانات
-file_path = "datatoread.xlsx"
-df = pd.read_excel(file_path, sheet_name="Sheet1")
-df.columns = df.columns.str.strip()
+# عنوان وترحيب
+st.title("Welcome, Dr. Amr Refai 👨‍⚕️")
+st.subheader("Boiling Process Simulator for Sugarcane")
 
-# 2. تجهيز نقاط البيانات
-points = df[["Temperature", "Time(minutes)"]].values
-output_vars = ["C(%)", "H(%)", "N(%)", "S(%)", "O(%)", "HHV(MJ/Kg)"]
-values = {var: df[var].values for var in output_vars}
+# تحميل البيانات
+df = pd.read_excel("datatoread.xlsx")
 
-# 3. تعريف الدالة الحسابية
-def get_simulation_results(temperature, time):
-    results = {}
-    for var in output_vars:
-        results[var] = griddata(points, values[var], (temperature, time), method='linear')
-    return results
+# مدخلات المستخدم (في الصفحة الرئيسية مش في sidebar)
+temperature = st.slider("Set Temperature (°C)", 200, 300, 250)
+time = st.slider("Set Time (minutes)", 15, 60, 30)
 
-# 4. واجهة Streamlit
-st.title("🌿 TORREFACTION HYSYS - Sugarcane Bagasse Version")
-st.markdown("Simulate torrefaction process outputs based on temperature and time inputs.")
+# عرض البيانات المختارة
+st.write(f"🧪 Selected temperature: **{temperature} °C**")
+st.write(f"⏱️ Selected time: **{time} minutes**")
+st.write("🌾 Crop type: **Sugarcane**")
 
-st.sidebar.header("Input Parameters")
-temp_input = st.sidebar.slider("Temperature (°C)", 200, 300, 250)
-time_input = st.sidebar.selectbox("Time (minutes)", [15, 30, 45, 60])
-
-if st.sidebar.button("Run Simulation"):
-    results = get_simulation_results(temp_input, time_input)
-    st.subheader("Simulation Results")
-    if results:
-        for var in output_vars:
-            st.write(f"**{var}**: {results[var]:.2f}")
-    else:
-        st.warning("No result could be interpolated for the selected inputs.")
-
-# 5. عرض الرسوم البيانية
-st.subheader("📈 Variable Trends by Temperature")
-time_points = df["Time(minutes)"].unique()
-for var in output_vars:
-    fig, ax = plt.subplots()
-    for time in time_points:
-        temp_data = df[df["Time(minutes)"] == time]["Temperature"]
-        var_data = df[df["Time(minutes)"] == time][var]
-        ax.plot(temp_data, var_data, label=f"{time} min")
-
-    ax.set_xlabel("Temperature")
-    ax.set_ylabel(var)
-    ax.set_title(f"{var} vs Temperature")
-    ax.legend()
-    ax.grid(True)
-    st.pyplot(fig)
+# رسم بياني بسيط بناءً على الوقت ودرجة الحرارة (مثال)
+fig, ax = plt.subplots()
+ax.plot(df['Time'], df['Temperature'], label="Original Data", color='blue')
+ax.axhline(temperature, color='red', linestyle='--', label='Selected Temp')
+ax.axvline(time, color='green', linestyle='--', label='Selected Time')
+ax.set_xlabel("Time (minutes)")
+ax.set_ylabel("Temperature (°C)")
+ax.legend()
+st.pyplot(fig)
